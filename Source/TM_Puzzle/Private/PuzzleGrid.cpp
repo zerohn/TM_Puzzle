@@ -24,10 +24,21 @@ void APuzzleGrid::BeginPlay()
 		{
 			if(TileClass)
 			{
-				SpawnTileToGrid(FIntPoint(j, i));
+				SpawnTileToGrid(FIntPoint(i, j));
 			}
 		}
 	}
+	// for (int32 i = 0; i < GridWidth; i++)
+	// {
+	// 	for (int32 j = 0; j < GridHeight; j++)
+	// 	{
+	// 		AsyncTask(ENamedThreads::GameThread, [this, i, j]()
+	// 		{
+	// 			ATile* NewTile = GetWorld()->SpawnActor<ATile>(ATile::StaticClass());
+	// 			SpawnTileToGrid(FIntPoint(i, j));
+	// 		});
+	// 	}
+	// }
 }
 
 // Called every frame
@@ -49,7 +60,24 @@ void APuzzleGrid::SpawnTileToGrid(FIntPoint Coordinate)
 	{
 		FVector NewLocation = GetActorLocation() + FVector(Coordinate.X * TileSize, Coordinate.Y * TileSize, 0.0f);
 		ATile* NewTile = GetWorld()->SpawnActor<ATile>(TileClass, NewLocation, FRotator::ZeroRotator);
-		NewTile->SetCoord(Coordinate.X, Coordinate.Y);
+		NewTile->SetCoord(Coordinate);
 		TileGrid[GetIndex(Coordinate.X, Coordinate.Y)] = NewTile;
+	}
+
+}
+
+void APuzzleGrid::ChangeTile(ATile* Tile_A, ATile* Tile_B)
+{
+	Tile_A->SetTileSelected();
+	Tile_B->SetTileSelected();
+	if(Tile_A != Tile_B)
+	{
+		int32 TileDist = abs(Tile_A->GetCoord().X - Tile_B->GetCoord().X) + abs(Tile_A->GetCoord().Y - Tile_B->GetCoord().Y);
+		if(TileDist <= 1)
+		{
+			FIntPoint temp = Tile_A->GetCoord();
+			Tile_A->SetTileLocation(Tile_B->GetCoord());
+			Tile_B->SetTileLocation(temp);
+		}
 	}
 }

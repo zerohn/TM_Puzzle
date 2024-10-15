@@ -37,4 +37,8 @@ public:
 	int32 GridWidth;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Grid")
 	int32 GridHeight;
+	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
+	void ChangeTile(ATile* Tile_A, ATile* Tile_B);
+	//UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
+	//void Check();
 };
