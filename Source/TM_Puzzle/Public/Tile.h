@@ -37,30 +37,18 @@ public:
 	class UBoxComponent* BoxComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
 	class UStaticMeshComponent* MeshComp;
+	
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
 	ETileType TileType;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
-	TArray<UStaticMesh*> TileMesh;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
-	TArray<UMaterialInstance*> TileMaterial;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Tile")
-	int32 CoordX;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Tile")
-	int32 CoordY;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Tile")
-	int32 ConnectedTile;
+	
+public:
 	UFUNCTION(BlueprintCallable, Category = "Tile")
-	void SetTileSelected();
+	ETileType GetTileType() { return TileType; }
+
 	UFUNCTION(BlueprintCallable, Category = "Tile")
-	void SetCoord(FIntPoint NewCoord);
-	UFUNCTION(BlueprintCallable, Category = "Tile")
-	FIntPoint GetCoord();
-	UFUNCTION(BlueprintCallable, Category = "Tile")
-	void SetTileLocation(FIntPoint NewCoord);
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
-	float SlideDuration;
-	float CurrentTime;
-	bool bIsSliding;
-	FVector CurrentLoc, ToMoveLoc;
+	void ChangeTileSelected();
+
 	bool bIsSelected;
+	bool bIsMatched;
 };

@@ -17,7 +17,6 @@ ATile::ATile()
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Tile Mesh"));
 	MeshComp->SetupAttachment(BoxComp);
 
-	SlideDuration = .8f;
 	bIsSelected = false;
 }
 
@@ -25,76 +24,30 @@ ATile::ATile()
 void ATile::BeginPlay()
 {
 	Super::BeginPlay();
-
-	int32 randNum = UKismetMathLibrary::RandomIntegerInRange(0, (int32)ETileType::MaxTileType - 1);
-	TileType = (ETileType)randNum;
 	
-	if(TileMesh[(int32)TileType])
-	{
-		MeshComp->SetStaticMesh(TileMesh[(int32)TileType]);
-	}
-	if(TileMaterial[(int32)TileType])
-	{
-		MeshComp->SetMaterial(0, TileMaterial[(int32)TileType]);
-	}
 }
 
 // Called every frame
 void ATile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if(bIsSliding)
-	{
-		if(CurrentTime <= SlideDuration)
-		{
-			CurrentTime += DeltaTime;
-			SetActorLocation(FMath::Lerp(CurrentLoc, ToMoveLoc, CurrentTime / SlideDuration));
-		}
-		else
-		{
-			bIsSliding = false;
-			CurrentTime = 0.0f;
-		}
-	}
 }
 
-void ATile::SetTileSelected()
+void ATile::ChangeTileSelected()
 {
 	bIsSelected = !bIsSelected;
 	if(bIsSelected)
 	{
 		if(MeshComp)
 		{
-			MeshComp->SetScalarParameterValueOnMaterials(FName("Select_Str"), 5.f);
+			MeshComp->SetScalarParameterValueOnMaterials(FName("Emissive_Pow"), 50.f);
 		}	
 	}
 	else
 	{
 		if(MeshComp)
 		{
-			MeshComp->SetScalarParameterValueOnMaterials(FName("Select_Str"), 0.f);
+			MeshComp->SetScalarParameterValueOnMaterials(FName("Emissive_Pow"), 0.f);
 		}
 	}
 }
-
-void ATile::SetCoord(FIntPoint NewCoord)
-{
-	CoordX = NewCoord.X;
-	CoordY = NewCoord.Y;
-}
-
-FIntPoint ATile::GetCoord()
-{
-	return FIntPoint(CoordX, CoordY);
-}
-
-void ATile::SetTileLocation(FIntPoint NewCoord)
-{
-	CurrentLoc = GetActorLocation();
-	ToMoveLoc = GetActorLocation() + FVector((NewCoord.X - CoordX) * 100.f, (NewCoord.Y - CoordY) * 100.f, 0.0f);
-	CoordX = NewCoord.X;
-	CoordY = NewCoord.Y;
-	bIsSliding = true;
-}
-

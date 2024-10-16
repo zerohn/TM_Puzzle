@@ -6,6 +6,19 @@
 #include "GameFramework/Actor.h"
 #include "PuzzleGrid.generated.h"
 
+UENUM(BlueprintType)
+enum class EPuzzleState : uint8
+{
+	Main UMETA(DisplayName = "Main"),
+	Start UMETA(DisplayName = "Start"),
+	Idle UMETA(DisplayName = "Idle"),
+	Move UMETA(DisplayName = "Move"),
+	Check UMETA(DisplayName = "Check"),
+	Pop UMETA(DisplayName = "Pop"),
+	Spawn UMETA(DisplayName = "Spawn"),
+	End UMETA(DisplayName = "End")
+};
+
 class ATile;
 
 UCLASS()
@@ -24,21 +37,43 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+	
+	EPuzzleState CurrentPuzzleState;
+	UFUNCTION(BlueprintCallable, Category = "PuzzleGrid")
+	void SetPuzzleState(const EPuzzleState NewPuzzleState);
+	UFUNCTION(BlueprintCallable, Category = "PuzzleGrid")
+	void HandlePuzzleState();
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Grid")
-	TArray<ATile*> TileGrid;
+	TArray<ATile*> PuzzleGrid;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Grid")
+	ATile* SelectedTile;
+	UFUNCTION(BlueprintCallable, Category = "PuzzleGrid")
+	void AddSelectedTile(ATile* NewTile);
+	UFUNCTION(BlueprintCallable, Category = "PuzzleGrid")
+	bool bCanChangeTile(ATile* Tile_A, ATile* Tile_B);
 	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
 	int32 GetIndex(int32 X, int32 Y);
+	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
+	FIntPoint GetCoordinate(int32 idx);
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Grid")
-	TSubclassOf<class ATile> TileClass;
+	TArray<TSubclassOf<class ATile>> TileClass;
+	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
+	TSubclassOf<class ATile> GetRandomTileClass();
+	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
+	void InitPuzzleGrid();
 	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
 	void SpawnTileToGrid(FIntPoint Coordinate);
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Grid")
-	int32 GridWidth;
+	int32 GridWidth = 8;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Grid")
-	int32 GridHeight;
+	int32 GridHeight = 8;
 	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
 	void ChangeTile(ATile* Tile_A, ATile* Tile_B);
-	//UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
-	//void Check();
+	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
+	bool MatchingCheck();
+	TArray<int32> MatchingTileIdx;
+	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
+	void PopTile();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Grid")
+	class ATileCommandInvoker* CommandInvoker;
 };

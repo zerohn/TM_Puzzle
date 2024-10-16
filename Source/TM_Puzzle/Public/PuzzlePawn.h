@@ -32,6 +32,4 @@ public:
 	class UInputAction* IA_Click;
 	UFUNCTION()
 	void OnClick(const FInputActionValue& value);
-	UPROPERTY(VisibleAnywhere, Category = "Input")
-	class ATile* CachedTileActor;
 };

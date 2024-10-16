@@ -62,20 +62,12 @@ void APuzzlePawn::OnClick(const FInputActionValue& value)
 		{
 			if(ATile* Tile = Cast<ATile>(Hit.GetActor()))
 			{
-				Tile->SetTileSelected();
-				if(CachedTileActor)
+				Tile->ChangeTileSelected();
+				APuzzleGrid* PuzzleGrid = Cast<APuzzleGrid>(UGameplayStatics::GetActorOfClass(GetWorld(), APuzzleGrid::StaticClass()));
+				if(PuzzleGrid)
 				{
-					APuzzleGrid* Grid = Cast<APuzzleGrid>(UGameplayStatics::GetActorOfClass(GetWorld(), APuzzleGrid::StaticClass()));
-					if(Grid)
-					{
-						GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Tile A, B : %s / %s"), *CachedTileActor->GetName(), *Tile->GetName()));
-						Grid->ChangeTile(CachedTileActor, Tile);
-						CachedTileActor = nullptr;
-						return;
-					}
+					PuzzleGrid->AddSelectedTile(Tile);
 				}
-				CachedTileActor = Tile;
-				//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Actor : %s"), *CachedTileActor->GetName()));
 			}
 		}
 	}
