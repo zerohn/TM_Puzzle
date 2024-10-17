@@ -16,7 +16,6 @@ private:
 public:	
 	// Sets default values for this actor's properties
 	ATileCommandInvoker();
-	~ATileCommandInvoker();
 
 	void ExecuteCommand(class ICommand* Command);
 	void UndoCommand();

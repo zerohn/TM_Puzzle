@@ -40,7 +40,7 @@ void ATile::ChangeTileSelected()
 	{
 		if(MeshComp)
 		{
-			MeshComp->SetScalarParameterValueOnMaterials(FName("Emissive_Pow"), 50.f);
+			MeshComp->SetScalarParameterValueOnMaterials(FName("Emissive_Pow"), 100.f);
 		}	
 	}
 	else

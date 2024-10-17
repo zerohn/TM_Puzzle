@@ -62,7 +62,6 @@ void APuzzlePawn::OnClick(const FInputActionValue& value)
 		{
 			if(ATile* Tile = Cast<ATile>(Hit.GetActor()))
 			{
-				Tile->ChangeTileSelected();
 				APuzzleGrid* PuzzleGrid = Cast<APuzzleGrid>(UGameplayStatics::GetActorOfClass(GetWorld(), APuzzleGrid::StaticClass()));
 				if(PuzzleGrid)
 				{

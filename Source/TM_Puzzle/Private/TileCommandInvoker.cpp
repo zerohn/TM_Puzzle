@@ -11,11 +11,6 @@ ATileCommandInvoker::ATileCommandInvoker()
 
 }
 
-ATileCommandInvoker::~ATileCommandInvoker()
-{
-	
-}
-
 void ATileCommandInvoker::ExecuteCommand(class ICommand* Command)
 {
 	Command->Execute();

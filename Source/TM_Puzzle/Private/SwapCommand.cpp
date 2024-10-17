@@ -7,10 +7,6 @@ SwapCommand::SwapCommand()
 {
 }
 
-SwapCommand::~SwapCommand()
-{
-}
-
 void SwapCommand::Execute()
 {
 	ATile* Temp = Tile_A;
