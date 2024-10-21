@@ -3,6 +3,9 @@
 
 #include "TileCommandInvoker.h"
 
+#include "PuzzleGrid.h"
+#include "SwapCommand.h"
+
 // Sets default values
 ATileCommandInvoker::ATileCommandInvoker()
 {
@@ -11,7 +14,7 @@ ATileCommandInvoker::ATileCommandInvoker()
 
 }
 
-void ATileCommandInvoker::ExecuteCommand(class ICommand* Command)
+void ATileCommandInvoker::ExecuteCommand(class TSharedPtr<ICommand> Command)
 {
 	Command->Execute();
 	CommandHistory.Push(Command);
@@ -21,9 +24,11 @@ void ATileCommandInvoker::UndoCommand()
 {
 	if(CommandHistory.Num())
 	{
-		ICommand* LastCommand = CommandHistory.Last();
-		LastCommand->Undo();
-
+		//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Orange,FString::Printf(TEXT("%s"), *Cast<SwapCommand>(CommandHistory.Last())->GridActor->GetName()));
+		if(TSharedPtr<ICommand>& LastCommand = CommandHistory.Last())
+		{
+			LastCommand->Undo();
+		}
 		CommandHistory.Pop();
 	}
 }

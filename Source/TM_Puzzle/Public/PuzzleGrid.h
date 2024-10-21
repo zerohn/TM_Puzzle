@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Tile.h"
 #include "GameFramework/Actor.h"
 #include "PuzzleGrid.generated.h"
 
@@ -61,9 +62,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PuzzleGrid")
 	bool bCanChangeTile(ATile* Tile_A, ATile* Tile_B);
 	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
-	void ChangeTile();
+	void ChangeTile(ATile* Tile_A, ATile* Tile_B);
 	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
-	void ChangeAnimation(const FVector Loc_A, const FVector Loc_B);
+	void ChangeAnimation(ATile* Tile_A, ATile* Tile_B, const FVector Loc_A, const FVector Loc_B);
 	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
 	void UpdateTileIndex();
 	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")

@@ -11,12 +11,12 @@ UCLASS()
 class TM_PUZZLE_API ATileCommandInvoker : public AActor
 {
 	GENERATED_BODY()
-private:
-	TArray<ICommand*> CommandHistory;
+public:
+	TArray<TSharedPtr<ICommand>> CommandHistory;
 public:	
 	// Sets default values for this actor's properties
 	ATileCommandInvoker();
 
-	void ExecuteCommand(class ICommand* Command);
+	void ExecuteCommand(class TSharedPtr<ICommand> Command);
 	void UndoCommand();
 };

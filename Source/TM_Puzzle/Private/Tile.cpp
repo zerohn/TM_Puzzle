@@ -2,8 +2,9 @@
 
 
 #include "Tile.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 #include "Components/BoxComponent.h"
-#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 ATile::ATile()
@@ -25,6 +26,12 @@ void ATile::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void ATile::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), PopFX, GetActorLocation(), FRotator::ZeroRotator)->SetColorParameter(FxParamName, FxColor);
 }
 
 // Called every frame

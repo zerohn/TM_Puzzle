@@ -58,14 +58,27 @@ void APuzzleGrid::HandlePuzzleState()
 		InitPuzzleGrid();
 		break;
 	case EPuzzleState::Idle:
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, "PuzzleState : Idle");
+		//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, "PuzzleState : Idle");
 		break;
 	case EPuzzleState::Move:
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, "PuzzleState : Move");
-		ChangeTile();
-		break;
+		{
+			//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, "PuzzleState : Move");
+			TSharedPtr<SwapCommand> NewCommand = MakeShared<SwapCommand>(this, SelectedTile[0], SelectedTile[1]);
+			CommandInvoker->ExecuteCommand(NewCommand);
+			break;
+		}
 	case EPuzzleState::Check:
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, "PuzzleState : Check");
+		//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("Invoker History Size : %d"), CommandInvoker->CommandHistory.Num()));
+		if(MatchingCheck())
+		{
+			PopTile();
+			SetPuzzleState(EPuzzleState::Idle);
+		}
+		else
+		{
+			CommandInvoker->UndoCommand();
+			SetPuzzleState(EPuzzleState::Idle);
+		}
 		break;
 	case EPuzzleState::Pop:
 		break;
@@ -98,22 +111,22 @@ void APuzzleGrid::InitPuzzleGrid()
 	PuzzleGrid.Reset();
 	PuzzleGrid.SetNum(GridHeight * GridWidth);
 
-	for (int32 i = 0; i < GridHeight; i++)
+	for (int32 y = 0; y < GridHeight; y++)
 	{
-		for (int32 j = 0; j < GridWidth; j++)
+		for (int32 x = 0; x < GridWidth; x++)
 		{
 			if (TileClass.Num())
 			{
 				float TileSize = 100.f;
 
-				FVector NewLocation = GetActorLocation() + FVector(i * TileSize, j * TileSize, 0.0f);
+				FVector NewLocation = GetActorLocation() + FVector(y * TileSize, x * TileSize, 0.0f);
 				// ATile* NewTile = GetWorld()->SpawnActor<ATile>(GetRandomTileClass(), NewLocation, FRotator::ZeroRotator);
 				// PuzzleGrid[GetIndex(j, i)] = NewTile;
-				AsyncTask(ENamedThreads::GameThread, [this, i, j, NewLocation]()
+				AsyncTask(ENamedThreads::GameThread, [this, y, x, NewLocation]()
 				{
 					ATile* NewTile = GetWorld()->SpawnActor<ATile>(GetRandomTileClass(), NewLocation,
 					                                               FRotator::ZeroRotator);
-					PuzzleGrid[GetIndex(i, j)] = NewTile;
+					PuzzleGrid[GetIndex(y, x)] = NewTile;
 				});
 			}
 		}
@@ -123,13 +136,12 @@ void APuzzleGrid::InitPuzzleGrid()
 
 void APuzzleGrid::AddSelectedTile(ATile* NewTile)
 {
-	int32 idx;
-	PuzzleGrid.Find(NewTile, idx);
-	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("idx : %d"), idx));
-	UE_LOG(LogTemp, Warning, TEXT("idx : %d"), idx);
 	
 	if (CurrentPuzzleState == EPuzzleState::Idle)
 	{
+		int32 idx;
+		PuzzleGrid.Find(NewTile, idx);
+		//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("idx : %d"), idx));
 		if (SelectedTile[0])
 		{
 			if (SelectedTile[0] != NewTile)
@@ -167,53 +179,49 @@ bool APuzzleGrid::bCanChangeTile(ATile* Tile_A, ATile* Tile_B)
 	return false;
 }
 
-void APuzzleGrid::ChangeTile()
+void APuzzleGrid::ChangeTile(ATile* Tile_A, ATile* Tile_B)
 {
-	if(bCanChangeTile(SelectedTile[0], SelectedTile[1]))
+	if(bCanChangeTile(Tile_A, Tile_B))
 	{
 		Alpha = 0.0f;
-		FVector Loc_A = SelectedTile[0]->GetActorLocation();
-		FVector Loc_B = SelectedTile[1]->GetActorLocation();
-		GetWorldTimerManager().SetTimer(TileAnimHandle, [this, Loc_A, Loc_B]()
+		FVector Loc_A = Tile_A->GetActorLocation();
+		FVector Loc_B = Tile_B->GetActorLocation();
+		GetWorldTimerManager().SetTimer(TileAnimHandle, [this, Tile_A, Tile_B, Loc_A, Loc_B]()
 		{
-			ChangeAnimation(Loc_A, Loc_B);
-		}, 0.02f, true);
+			ChangeAnimation(Tile_A, Tile_B, Loc_A, Loc_B);
+		}, 0.01f, true);
 	}
 	else
 	{
-		SelectedTile[0]->ChangeTileSelected();
-		SelectedTile[1]->ChangeTileSelected();
 		SelectedTile[0] = nullptr;
 		SelectedTile[1] = nullptr;
 		SetPuzzleState(EPuzzleState::Idle);
 	}
 }
 
-void APuzzleGrid::ChangeAnimation(const FVector Loc_A, const FVector Loc_B)
+void APuzzleGrid::ChangeAnimation(ATile* Tile_A, ATile* Tile_B, const FVector Loc_A, const FVector Loc_B)
 {
-	SelectedTile[0]->SetActorLocation(FMath::Lerp(Loc_A, Loc_B, Alpha));
-	SelectedTile[1]->SetActorLocation(FMath::Lerp(Loc_B, Loc_A, Alpha));
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("Alpha : %.f"), Alpha));
+	Tile_A->SetActorLocation(FMath::Lerp(Loc_A, Loc_B, Alpha));
+	Tile_B->SetActorLocation(FMath::Lerp(Loc_B, Loc_A, Alpha));
+	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("Alpha : %.2f"), Alpha));
 	Alpha += 0.05f;
 	if (Alpha > 1.0f)
 	{
 		Alpha = 0.f;
 		GetWorldTimerManager().ClearTimer(TileAnimHandle);
-		SelectedTile[0]->ChangeTileSelected();
-		SelectedTile[0]->SetActorLocation(Loc_B);
-		SelectedTile[1]->ChangeTileSelected();
-		SelectedTile[1]->SetActorLocation(Loc_A);
+		Tile_A->SetActorLocation(Loc_B);
+		Tile_B->SetActorLocation(Loc_A);
 		UpdateTileIndex();
 	}
 }
 
 void APuzzleGrid::UpdateTileIndex()
 {
-	SwapCommand* NewCommand = new SwapCommand(SelectedTile[0], SelectedTile[1]);
-	CommandInvoker->ExecuteCommand(NewCommand);
+	// SwapCommand* NewCommand = new SwapCommand(this, SelectedTile[0], SelectedTile[1]);
+	// CommandInvoker->ExecuteCommand(NewCommand);
 	SelectedTile[0] = nullptr;
 	SelectedTile[1] = nullptr;
-	SetPuzzleState(EPuzzleState::Idle);
+	SetPuzzleState(EPuzzleState::Check);
 }
 
 void APuzzleGrid::SpawnTileToGrid(FIntPoint Coordinate)

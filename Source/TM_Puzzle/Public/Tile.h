@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NiagaraSystem.h"
 #include "GameFramework/Actor.h"
 #include "Tile.generated.h"
 
@@ -28,6 +29,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:	
 	// Called every frame
@@ -37,6 +39,12 @@ public:
 	class UBoxComponent* BoxComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
 	class UStaticMeshComponent* MeshComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
+	UNiagaraSystem* PopFX;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
+	FName FxParamName = "Pop Color";
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
+	FLinearColor FxColor = FColor::White;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")

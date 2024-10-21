@@ -3,20 +3,19 @@
 
 #include "SwapCommand.h"
 
-SwapCommand::SwapCommand()
-{
-}
+#include "PuzzleGrid.h"
 
 void SwapCommand::Execute()
 {
-	ATile* Temp = Tile_A;
-	Tile_A = Tile_B;
-	Tile_B = Temp;
+	GridActor->ChangeTile(Tile_A, Tile_B);
+	GridActor->PuzzleGrid.Swap(GridActor->PuzzleGrid.Find(Tile_A), GridActor->PuzzleGrid.Find(Tile_B));
 }
 
 void SwapCommand::Undo()
 {
-	ATile* Temp = Tile_A;
-	Tile_A = Tile_B;
-	Tile_B = Temp;
+	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Orange, FString::Printf(TEXT("Undo %s, %s"), *Tile_A->GetName(), *Tile_B->GetName()));
+	GridActor->ChangeTile(Tile_A, Tile_B);
+	GridActor->PuzzleGrid.Swap(GridActor->PuzzleGrid.Find(Tile_A), GridActor->PuzzleGrid.Find(Tile_B));
+	Tile_A->ChangeTileSelected();
+	Tile_B->ChangeTileSelected();
 }
