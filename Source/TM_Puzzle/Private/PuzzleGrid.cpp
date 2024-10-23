@@ -49,13 +49,23 @@ void APuzzleGrid::SetPuzzleState(const EPuzzleState NewPuzzleState)
 
 void APuzzleGrid::HandlePuzzleState()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("PuzzleState : %d"), CurrentPuzzleState));
 	switch (CurrentPuzzleState)
 	{
 	case EPuzzleState::Main:
 		break;
 	case EPuzzleState::Start:
-		//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, "PuzzleState : Start");
-		InitPuzzleGrid();
+		{
+			InitPuzzleGrid();
+			if(MatchingCheck())
+			{
+				SetPuzzleState(EPuzzleState::Pop);
+			}
+			else
+			{
+				SetPuzzleState(EPuzzleState::Idle);
+			}
+		}
 		break;
 	case EPuzzleState::Idle:
 		//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, "PuzzleState : Idle");
@@ -72,7 +82,6 @@ void APuzzleGrid::HandlePuzzleState()
 		if(MatchingCheck())
 		{
 			PopTile();
-			SetPuzzleState(EPuzzleState::Idle);
 		}
 		else
 		{
@@ -81,6 +90,7 @@ void APuzzleGrid::HandlePuzzleState()
 		}
 		break;
 	case EPuzzleState::Pop:
+		PopTile();
 		break;
 	case EPuzzleState::Spawn:
 		break;
@@ -195,7 +205,7 @@ void APuzzleGrid::ChangeTile(ATile* Tile_A, ATile* Tile_B)
 	{
 		SelectedTile[0] = nullptr;
 		SelectedTile[1] = nullptr;
-		SetPuzzleState(EPuzzleState::Idle);
+		//SetPuzzleState(EPuzzleState::Idle);
 	}
 }
 
@@ -211,7 +221,8 @@ void APuzzleGrid::ChangeAnimation(ATile* Tile_A, ATile* Tile_B, const FVector Lo
 		GetWorldTimerManager().ClearTimer(TileAnimHandle);
 		Tile_A->SetActorLocation(Loc_B);
 		Tile_B->SetActorLocation(Loc_A);
-		UpdateTileIndex();
+		SetPuzzleState(EPuzzleState::Check);
+		//UpdateTileIndex();
 	}
 }
 
