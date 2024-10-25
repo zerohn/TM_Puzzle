@@ -7,15 +7,13 @@
 
 void SwapCommand::Execute()
 {
-	GridActor->ChangeTile(Tile_A, Tile_B);
-	GridActor->PuzzleGrid.Swap(GridActor->PuzzleGrid.Find(Tile_A), GridActor->PuzzleGrid.Find(Tile_B));
+	GridActor->SwapTile(Tile_A, Tile_B);
 }
 
 void SwapCommand::Undo()
 {
 	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Orange, FString::Printf(TEXT("Undo %s, %s"), *Tile_A->GetName(), *Tile_B->GetName()));
-	GridActor->ChangeTile(Tile_A, Tile_B);
-	GridActor->PuzzleGrid.Swap(GridActor->PuzzleGrid.Find(Tile_A), GridActor->PuzzleGrid.Find(Tile_B));
-	Tile_A->ChangeTileSelected();
-	Tile_B->ChangeTileSelected();
+	GridActor->SwapTile(Tile_A, Tile_B);
+	Tile_A->SetTileSelected(false);
+	Tile_B->SetTileSelected(false);
 }

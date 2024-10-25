@@ -33,8 +33,7 @@ protected:
 
 public:	
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-	
+	// virtual void Tick(float DeltaTime) override;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
 	class UBoxComponent* BoxComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
@@ -47,16 +46,31 @@ public:
 	FLinearColor FxColor = FColor::White;
 	
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
+	// 타일의 Type 변수
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Tile")
 	ETileType TileType;
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Tile")
 	ETileType GetTileType() { return TileType; }
-
 	UFUNCTION(BlueprintCallable, Category = "Tile")
-	void ChangeTileSelected();
-
+	void SetTileSelected(bool NewValue);
+	// UFUNCTION(BlueprintCallable, Category = "Tile")
+	// void ChangeTileSelected(bool bIsSelected);
 	bool bIsSelected;
 	bool bIsMatched;
+	UFUNCTION()
+	void MoveToLocation(const FVector& NewLocation, float Duration);
+	
+private:
+	// 타일 Animation 변수, 함수
+	FTimerHandle MoveTimerHandle;
+	FVector StartLoc;
+	FVector EndLoc;
+	float LerpAlpha;
+	UFUNCTION()
+	void OnMoveAnimUpdate();
+	UFUNCTION()
+	void OnMoveAnimComplete();
+	
 };

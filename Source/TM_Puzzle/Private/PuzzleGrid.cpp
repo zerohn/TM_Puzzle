@@ -14,7 +14,7 @@ APuzzleGrid::APuzzleGrid()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
-	CurrentPuzzleState = EPuzzleState::Main;
+	CurrentPuzzleState = EPuzzleState::MainMenu;
 }
 
 // Called when the game starts or when spawned
@@ -25,7 +25,8 @@ void APuzzleGrid::BeginPlay()
 	CommandInvoker = GetWorld()->SpawnActor<ATileCommandInvoker>(ATileCommandInvoker::StaticClass());
 	
 	// Set Begin State
-	SetPuzzleState(EPuzzleState::Start);
+	SetPuzzleState(EPuzzleState::Initialize);
+	MoveCounter.Set(0);
 }
 
 // Called every frame
@@ -36,11 +37,6 @@ void APuzzleGrid::Tick(float DeltaTime)
 
 void APuzzleGrid::SetPuzzleState(const EPuzzleState NewPuzzleState)
 {
-	if (CurrentPuzzleState == NewPuzzleState)
-	{
-		return;
-	}
-
 	CurrentPuzzleState = NewPuzzleState;
 	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, "ChangePuzzleState");
 	FTimerHandle PuzzleTimerHandle;
@@ -49,53 +45,59 @@ void APuzzleGrid::SetPuzzleState(const EPuzzleState NewPuzzleState)
 
 void APuzzleGrid::HandlePuzzleState()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("PuzzleState : %d"), CurrentPuzzleState));
+	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("State : %s"), *StaticEnum<EPuzzleState>()->GetValueAsString(CurrentPuzzleState)));
 	switch (CurrentPuzzleState)
 	{
-	case EPuzzleState::Main:
-		break;
-	case EPuzzleState::Start:
+	case EPuzzleState::MainMenu:
 		{
+			// 메인 메뉴 (UI)
+			break;
+		}
+	case EPuzzleState::Initialize:
+		{
+			// 퍼즐 게임 시작 전 준비 과정
 			InitPuzzleGrid();
+			SetPuzzleState(EPuzzleState::PlayerTurn);
+			break;
+		}
+	case EPuzzleState::PlayerTurn:
+		{
+			// 플레이어의 입력 대기 상태
+			break;
+		}
+	case EPuzzleState::ResolveBoard:
+		{
+			// 퍼즐의 매칭상태 확인, 타일 소멸, 타일 생성 등 메인 게임 로직
+			
+			// 매칭 된 타일이 있다면 타일 소멸 함수 실행, 없다면 Undo Command 실행
 			if(MatchingCheck())
 			{
-				SetPuzzleState(EPuzzleState::Pop);
+				PopTile();
 			}
 			else
 			{
-				SetPuzzleState(EPuzzleState::Idle);
+				CommandInvoker->UndoCommand();
+				SetPuzzleState(EPuzzleState::PlayerTurn);
 			}
-		}
-		break;
-	case EPuzzleState::Idle:
-		//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, "PuzzleState : Idle");
-		break;
-	case EPuzzleState::Move:
-		{
-			//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, "PuzzleState : Move");
-			TSharedPtr<SwapCommand> NewCommand = MakeShared<SwapCommand>(this, SelectedTile[0], SelectedTile[1]);
-			CommandInvoker->ExecuteCommand(NewCommand);
+			
+			// 타일 2개가 선택되어 있을 시 SwapCommand 실행
+			if (SelectedTile[0] != nullptr && SelectedTile[1] != nullptr)
+			{
+				TSharedPtr<SwapCommand> NewCommand = MakeShared<SwapCommand>(this, SelectedTile[0], SelectedTile[1]);
+				CommandInvoker->ExecuteCommand(NewCommand);
+				SelectedTile[0] = nullptr;
+				SelectedTile[1] = nullptr;
+			}
+
 			break;
 		}
-	case EPuzzleState::Check:
-		//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("Invoker History Size : %d"), CommandInvoker->CommandHistory.Num()));
-		if(MatchingCheck())
+	case EPuzzleState::GameOver:
 		{
-			PopTile();
+			// 게임오버 상태 (UI)
+			//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("Invoker History Size : %d"), CommandInvoker->CommandHistory.Num()));
+			
+			break;
 		}
-		else
-		{
-			CommandInvoker->UndoCommand();
-			SetPuzzleState(EPuzzleState::Idle);
-		}
-		break;
-	case EPuzzleState::Pop:
-		PopTile();
-		break;
-	case EPuzzleState::Spawn:
-		break;
-	case EPuzzleState::End:
-		break;
 	}
 }
 
@@ -118,70 +120,71 @@ TSubclassOf<class ATile> APuzzleGrid::GetRandomTileClass()
 void APuzzleGrid::InitPuzzleGrid()
 {
 	// Set PuzzleGrid Size
-	PuzzleGrid.Reset();
 	PuzzleGrid.SetNum(GridHeight * GridWidth);
 
 	for (int32 y = 0; y < GridHeight; y++)
 	{
 		for (int32 x = 0; x < GridWidth; x++)
 		{
-			if (TileClass.Num())
+			if (TileClass.Num() && PuzzleGrid[GetIndex(x, y)] == nullptr)
 			{
 				float TileSize = 100.f;
 
 				FVector NewLocation = GetActorLocation() + FVector(y * TileSize, x * TileSize, 0.0f);
-				// ATile* NewTile = GetWorld()->SpawnActor<ATile>(GetRandomTileClass(), NewLocation, FRotator::ZeroRotator);
-				// PuzzleGrid[GetIndex(j, i)] = NewTile;
-				AsyncTask(ENamedThreads::GameThread, [this, y, x, NewLocation]()
-				{
-					ATile* NewTile = GetWorld()->SpawnActor<ATile>(GetRandomTileClass(), NewLocation,
-					                                               FRotator::ZeroRotator);
-					PuzzleGrid[GetIndex(y, x)] = NewTile;
-				});
+				ATile* NewTile = GetWorld()->SpawnActor<ATile>(GetRandomTileClass(), NewLocation, FRotator::ZeroRotator);
+				PuzzleGrid[GetIndex(x, y)] = NewTile;
+				// AsyncTask(ENamedThreads::GameThread, [this, x, y, NewLocation]()
+				// {
+				// 	ATile* NewTile = GetWorld()->SpawnActor<ATile>(GetRandomTileClass(), NewLocation,
+				// 	                                               FRotator::ZeroRotator);
+				// 	PuzzleGrid[GetIndex(x, y)] = NewTile;
+				// });
 			}
 		}
 	}
-	SetPuzzleState(EPuzzleState::Idle);
+	if (MatchingCheck())
+	{
+		PopTile();
+		InitPuzzleGrid();
+	}
 }
 
 void APuzzleGrid::AddSelectedTile(ATile* NewTile)
 {
+	if (CurrentPuzzleState != EPuzzleState::PlayerTurn) return;
 	
-	if (CurrentPuzzleState == EPuzzleState::Idle)
+	// int32 idx;
+	// PuzzleGrid.Find(NewTile, idx);
+	// GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("idx : %d"), idx));
+	
+	if (SelectedTile[0])
 	{
-		int32 idx;
-		PuzzleGrid.Find(NewTile, idx);
-		//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("idx : %d"), idx));
-		if (SelectedTile[0])
+		if (SelectedTile[0] != NewTile)
 		{
-			if (SelectedTile[0] != NewTile)
-			{
-				NewTile->ChangeTileSelected();
-				SelectedTile[1] = NewTile;
-				SetPuzzleState(EPuzzleState::Move);
-			}
-			else
-			{
-				SelectedTile[0]->ChangeTileSelected();
-				SelectedTile[0] = nullptr;
-			}
+			NewTile->SetTileSelected(true);
+			SelectedTile[1] = NewTile;
+			SetPuzzleState(EPuzzleState::ResolveBoard);
 		}
 		else
 		{
-			NewTile->ChangeTileSelected();
-			SelectedTile[0] = NewTile;
+			SelectedTile[0]->SetTileSelected(false);
+			SelectedTile[0] = nullptr;
 		}
+	}
+	else
+	{
+		NewTile->SetTileSelected(true);
+		SelectedTile[0] = NewTile;
 	}
 }
 
-bool APuzzleGrid::bCanChangeTile(ATile* Tile_A, ATile* Tile_B)
+bool APuzzleGrid::bCanSwapTile(ATile* Tile_A, ATile* Tile_B)
 {
 	int32 idx_1;
 	int32 idx_2;
 	if (PuzzleGrid.Find(Tile_A, idx_1) && PuzzleGrid.Find(Tile_B, idx_2))
 	{
-		if (abs(GetCoordinate(idx_1).X - GetCoordinate(idx_2).X) + abs(GetCoordinate(idx_1).Y - GetCoordinate(idx_2).Y)
-			== 1)
+		if (abs(GetCoordinate(idx_1).X - GetCoordinate(idx_2).X) + abs(GetCoordinate(idx_1).Y - GetCoordinate(idx_2).Y) == 1)
 		{
 			return true;
 		}
@@ -189,51 +192,47 @@ bool APuzzleGrid::bCanChangeTile(ATile* Tile_A, ATile* Tile_B)
 	return false;
 }
 
-void APuzzleGrid::ChangeTile(ATile* Tile_A, ATile* Tile_B)
+void APuzzleGrid::SwapTile(ATile* Tile_A, ATile* Tile_B)
 {
-	if(bCanChangeTile(Tile_A, Tile_B))
+	if(bCanSwapTile(Tile_A, Tile_B))
 	{
 		Alpha = 0.0f;
 		FVector Loc_A = Tile_A->GetActorLocation();
 		FVector Loc_B = Tile_B->GetActorLocation();
-		GetWorldTimerManager().SetTimer(TileAnimHandle, [this, Tile_A, Tile_B, Loc_A, Loc_B]()
-		{
-			ChangeAnimation(Tile_A, Tile_B, Loc_A, Loc_B);
-		}, 0.01f, true);
+		Tile_A->MoveToLocation(Loc_B, 0.5f);
+		Tile_B->MoveToLocation(Loc_A, 0.5f);
+		// GetWorldTimerManager().SetTimer(TileAnimHandle, [this, Tile_A, Tile_B, Loc_A, Loc_B]()
+		// {
+		// 	ChangeAnimation(Tile_A, Tile_B, Loc_A, Loc_B);
+		// }, 0.01f, true);
+		PuzzleGrid.Swap(PuzzleGrid.Find(Tile_A), PuzzleGrid.Find(Tile_B));
 	}
 	else
 	{
+		SelectedTile[0]->SetTileSelected(false);
 		SelectedTile[0] = nullptr;
+		SelectedTile[1]->SetTileSelected(false);
 		SelectedTile[1] = nullptr;
-		//SetPuzzleState(EPuzzleState::Idle);
+		SetPuzzleState(EPuzzleState::PlayerTurn);
 	}
 }
 
-void APuzzleGrid::ChangeAnimation(ATile* Tile_A, ATile* Tile_B, const FVector Loc_A, const FVector Loc_B)
-{
-	Tile_A->SetActorLocation(FMath::Lerp(Loc_A, Loc_B, Alpha));
-	Tile_B->SetActorLocation(FMath::Lerp(Loc_B, Loc_A, Alpha));
-	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("Alpha : %.2f"), Alpha));
-	Alpha += 0.05f;
-	if (Alpha > 1.0f)
-	{
-		Alpha = 0.f;
-		GetWorldTimerManager().ClearTimer(TileAnimHandle);
-		Tile_A->SetActorLocation(Loc_B);
-		Tile_B->SetActorLocation(Loc_A);
-		SetPuzzleState(EPuzzleState::Check);
-		//UpdateTileIndex();
-	}
-}
-
-void APuzzleGrid::UpdateTileIndex()
-{
-	// SwapCommand* NewCommand = new SwapCommand(this, SelectedTile[0], SelectedTile[1]);
-	// CommandInvoker->ExecuteCommand(NewCommand);
-	SelectedTile[0] = nullptr;
-	SelectedTile[1] = nullptr;
-	SetPuzzleState(EPuzzleState::Check);
-}
+// void APuzzleGrid::ChangeAnimation(ATile* Tile_A, ATile* Tile_B, const FVector Loc_A, const FVector Loc_B)
+// {
+// 	Tile_A->SetActorLocation(FMath::Lerp(Loc_A, Loc_B, Alpha));
+// 	Tile_B->SetActorLocation(FMath::Lerp(Loc_B, Loc_A, Alpha));
+// 	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("Alpha : %.2f"), Alpha));
+// 	Alpha += 0.05f;
+// 	if (Alpha > 1.0f)
+// 	{
+// 		Alpha = 0.f;
+// 		GetWorldTimerManager().ClearTimer(TileAnimHandle);
+// 		Tile_A->SetActorLocation(Loc_B);
+// 		Tile_B->SetActorLocation(Loc_A);
+// 		SetPuzzleState(EPuzzleState::ResolveBoard);
+// 		//UpdateTileIndex();
+// 	}
+// }
 
 void APuzzleGrid::SpawnTileToGrid(FIntPoint Coordinate)
 {
@@ -335,5 +334,22 @@ void APuzzleGrid::PopTile()
 			PuzzleGrid[i]->Destroy();
 			PuzzleGrid[i] = nullptr;
 		}
+	}
+}
+
+void APuzzleGrid::StartMoveAnim()
+{
+	MoveCounter.Increment();
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Cyan, FString::Printf(TEXT("MoveCount : %d"), MoveCounter.GetValue()));
+}
+
+void APuzzleGrid::EndMoveAnim()
+{
+	MoveCounter.Decrement();
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Cyan, FString::Printf(TEXT("MoveCount : %d"), MoveCounter.GetValue()));
+
+	if (MoveCounter.GetValue() == 0)
+	{
+		SetPuzzleState(EPuzzleState::ResolveBoard);
 	}
 }
