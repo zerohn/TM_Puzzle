@@ -3,6 +3,9 @@
 
 #include "GameStateSubject.h"
 
+#include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
+
 UGameStateSubject::UGameStateSubject()
 {
 	PlayerScore = 0;

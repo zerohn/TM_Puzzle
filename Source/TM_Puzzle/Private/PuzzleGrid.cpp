@@ -3,9 +3,11 @@
 
 #include "PuzzleGrid.h"
 
+#include "Puzzle_GameModeBase.h"
 #include "SwapCommand.h"
 #include "Tile.h"
 #include "TileCommandInvoker.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
@@ -72,6 +74,7 @@ void APuzzleGrid::HandlePuzzleState()
 			// 매칭 된 타일이 있다면 타일 소멸 함수 실행, 없다면 Undo Command 실행
 			if(MatchingCheck())
 			{
+				CommandInvoker->ClearHistory();
 				PopTile();
 			}
 			else
@@ -236,6 +239,13 @@ void APuzzleGrid::SwapTile(ATile* Tile_A, ATile* Tile_B)
 
 void APuzzleGrid::SpawnTileToGrid(FIntPoint Coordinate)
 {
+	for (int32 i = 0; i < PuzzleGrid.Num(); i++)
+	{
+		if (PuzzleGrid[i] == nullptr)
+		{
+			
+		}
+	}
 }
 
 bool APuzzleGrid::MatchingCheck()

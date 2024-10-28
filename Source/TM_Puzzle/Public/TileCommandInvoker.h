@@ -19,4 +19,5 @@ public:
 
 	void ExecuteCommand(class TSharedPtr<ICommand> Command);
 	void UndoCommand();
+	void ClearHistory();
 };

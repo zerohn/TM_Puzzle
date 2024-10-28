@@ -33,4 +33,9 @@ void ATileCommandInvoker::UndoCommand()
 	}
 }
 
+void ATileCommandInvoker::ClearHistory()
+{
+	CommandHistory.Empty();
+}
+
 
