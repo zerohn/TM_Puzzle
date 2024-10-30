@@ -59,6 +59,9 @@ public:
 	// 퍼즐의 타일들을 저장하는 배열, 그리드
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Grid")
 	TArray<ATile*> PuzzleGrid;
+	// 타일들의 간격 조정을 위한 사이즈
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Grid")
+	float TileSize = 100.f;
 	// 퍼즐의 그리드에 초기 타일을 배치하는 게임 초기화 함수
 	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
 	void InitPuzzleGrid();
@@ -76,9 +79,13 @@ public:
 	// 선택된 두 타일의 자리를 교환하는 Animation 함수
 	// UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
 	// void ChangeAnimation(ATile* Tile_A, ATile* Tile_B, const FVector Loc_A, const FVector Loc_B);
+	// 그리드의 빈 공간으로 타일을 이동 시키는 함수
+	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
+	void DropTile();
+	// 
 	// 그리드의 빈 Index에 새 타일을 생성하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
-	void SpawnTileToGrid(FIntPoint Coordinate);
+	void SpawnTileToGrid();
 	// 그리드의 가로, 세로 사이즈를 정하는 변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Grid")
 	int32 GridWidth = 8;

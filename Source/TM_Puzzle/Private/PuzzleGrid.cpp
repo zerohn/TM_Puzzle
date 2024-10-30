@@ -76,6 +76,8 @@ void APuzzleGrid::HandlePuzzleState()
 			{
 				CommandInvoker->ClearHistory();
 				PopTile();
+				DropTile();
+				SpawnTileToGrid();
 			}
 			else
 			{
@@ -91,7 +93,7 @@ void APuzzleGrid::HandlePuzzleState()
 				SelectedTile[0] = nullptr;
 				SelectedTile[1] = nullptr;
 			}
-
+			//DropTile();
 			break;
 		}
 	case EPuzzleState::GameOver:
@@ -111,7 +113,7 @@ int32 APuzzleGrid::GetIndex(int32 X, int32 Y)
 
 FIntPoint APuzzleGrid::GetCoordinate(int32 idx)
 {
-	return FIntPoint(idx % GridWidth, idx / GridWidth);
+	return FIntPoint(idx / GridWidth, idx % GridWidth);
 }
 
 TSubclassOf<class ATile> APuzzleGrid::GetRandomTileClass()
@@ -131,8 +133,6 @@ void APuzzleGrid::InitPuzzleGrid()
 		{
 			if (TileClass.Num() && PuzzleGrid[GetIndex(x, y)] == nullptr)
 			{
-				float TileSize = 100.f;
-
 				FVector NewLocation = GetActorLocation() + FVector(y * TileSize, x * TileSize, 0.0f);
 				ATile* NewTile = GetWorld()->SpawnActor<ATile>(GetRandomTileClass(), NewLocation, FRotator::ZeroRotator);
 				PuzzleGrid[GetIndex(x, y)] = NewTile;
@@ -220,6 +220,33 @@ void APuzzleGrid::SwapTile(ATile* Tile_A, ATile* Tile_B)
 	}
 }
 
+void APuzzleGrid::DropTile()
+{
+	//타일의 새로 방향을 확인하며 빈 공간으로 타일 이동
+	TArray<TPair<ATile*, int32>> MoveTiles;
+	for (int i = 0; i < GridHeight * GridWidth; i++)
+	{
+		if (PuzzleGrid[i] == nullptr)
+		{
+			for (int j = i + GridWidth; j < GridHeight * GridWidth; j += GridWidth)
+			{
+				if (PuzzleGrid[j] != nullptr)
+				{
+					MoveTiles.Add(TPair<ATile*, int32>(PuzzleGrid[j], i));
+					PuzzleGrid[j] = nullptr;
+					break;
+				}
+			}
+		}
+	}
+	for (auto Tile : MoveTiles)
+	{
+		PuzzleGrid[Tile.Value] = Tile.Key;
+		FIntPoint Coord = GetCoordinate(Tile.Value);
+		Tile.Key->MoveToLocation(GetActorLocation() + FVector(Coord.X * TileSize, Coord.Y * TileSize, 0.0f), 0.5f);
+	}
+}
+
 // void APuzzleGrid::ChangeAnimation(ATile* Tile_A, ATile* Tile_B, const FVector Loc_A, const FVector Loc_B)
 // {
 // 	Tile_A->SetActorLocation(FMath::Lerp(Loc_A, Loc_B, Alpha));
@@ -237,13 +264,17 @@ void APuzzleGrid::SwapTile(ATile* Tile_A, ATile* Tile_B)
 // 	}
 // }
 
-void APuzzleGrid::SpawnTileToGrid(FIntPoint Coordinate)
+void APuzzleGrid::SpawnTileToGrid()
 {
 	for (int32 i = 0; i < PuzzleGrid.Num(); i++)
 	{
 		if (PuzzleGrid[i] == nullptr)
 		{
-			
+			FIntPoint Coord = GetCoordinate(i);
+			ATile* NewTile = GetWorld()->SpawnActor<ATile>(GetRandomTileClass());
+			NewTile->SetActorLocation(GetActorLocation() + FVector(Coord.X * TileSize + GridHeight * TileSize, Coord.Y * TileSize, 0.0f));
+			PuzzleGrid[i] = NewTile;
+			NewTile->MoveToLocation(GetActorLocation() + FVector(Coord.X * TileSize, Coord.Y * TileSize, 0.0f), 0.5f);
 		}
 	}
 }
@@ -295,7 +326,7 @@ bool APuzzleGrid::MatchingCheck()
 	// 세로 탐색
 	for (int i = 0; i < GridWidth; i++)
 	{
-		for (int j = i; j < GridHeight * GridWidth; j += GridHeight)
+		for (int j = i; j < GridHeight * GridWidth; j += GridWidth)
 		{
 			if (PuzzleGrid[j])
 			{
