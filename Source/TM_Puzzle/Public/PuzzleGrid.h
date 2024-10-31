@@ -82,7 +82,6 @@ public:
 	// 그리드의 빈 공간으로 타일을 이동 시키는 함수
 	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
 	void DropTile();
-	// 
 	// 그리드의 빈 Index에 새 타일을 생성하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
 	void SpawnTileToGrid();
@@ -99,11 +98,17 @@ public:
 	// 매칭된 타일을 소멸시키는 함수
 	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
 	void PopTile();
+	// 퍼즐 게임을 더 진행할 수 있는지 확인하는 함수
+	UFUNCTION(BlueprintCallable, Category = "Puzzle Grid")
+	bool bCanPlayPuzzle();
 	// Command 패턴을 사용할 수 있는 Manager Class
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Puzzle Grid")
 	class ATileCommandInvoker* CommandInvoker;
+	// FSM 상태 전환에 필요한 Handle
+	FTimerHandle PuzzleTimerHandle;
 	// 타일의 Animation에 필요한 Handle과 Alpha 변수 
 	FTimerHandle TileAnimHandle;
+	int32 ComboScore;
 	float Alpha;
 	// 타일의 Animation 동작을 확인할 수 있는 Counter, 멀티스레드에서 Counting 안전성 보장
 	FThreadSafeCounter MoveCounter;

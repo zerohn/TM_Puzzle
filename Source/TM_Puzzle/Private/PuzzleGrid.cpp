@@ -3,6 +3,7 @@
 
 #include "PuzzleGrid.h"
 
+#include "Puzzle_GameInstance.h"
 #include "Puzzle_GameModeBase.h"
 #include "SwapCommand.h"
 #include "Tile.h"
@@ -41,7 +42,7 @@ void APuzzleGrid::SetPuzzleState(const EPuzzleState NewPuzzleState)
 {
 	CurrentPuzzleState = NewPuzzleState;
 	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, "ChangePuzzleState");
-	FTimerHandle PuzzleTimerHandle;
+	if (GetWorldTimerManager().IsTimerActive(PuzzleTimerHandle)) GetWorldTimerManager().ClearTimer(PuzzleTimerHandle);
 	GetWorldTimerManager().SetTimer(PuzzleTimerHandle, this, &APuzzleGrid::HandlePuzzleState, 0.5f);
 }
 
@@ -64,7 +65,12 @@ void APuzzleGrid::HandlePuzzleState()
 		}
 	case EPuzzleState::PlayerTurn:
 		{
+			ComboScore = 1;
 			// 플레이어의 입력 대기 상태
+			if (!bCanPlayPuzzle())
+			{
+				SetPuzzleState(EPuzzleState::GameOver);
+			}
 			break;
 		}
 	case EPuzzleState::ResolveBoard:
@@ -79,27 +85,26 @@ void APuzzleGrid::HandlePuzzleState()
 				DropTile();
 				SpawnTileToGrid();
 			}
-			else
+			else if (SelectedTile[0] != nullptr && SelectedTile[1] != nullptr)
 			{
-				CommandInvoker->UndoCommand();
-				SetPuzzleState(EPuzzleState::PlayerTurn);
-			}
-			
-			// 타일 2개가 선택되어 있을 시 SwapCommand 실행
-			if (SelectedTile[0] != nullptr && SelectedTile[1] != nullptr)
-			{
+				// 타일 2개가 선택되어 있을 시 SwapCommand 실행
 				TSharedPtr<SwapCommand> NewCommand = MakeShared<SwapCommand>(this, SelectedTile[0], SelectedTile[1]);
 				CommandInvoker->ExecuteCommand(NewCommand);
 				SelectedTile[0] = nullptr;
 				SelectedTile[1] = nullptr;
 			}
-			//DropTile();
+			else
+			{
+				CommandInvoker->UndoCommand();
+				SetPuzzleState(EPuzzleState::PlayerTurn);
+			}
+
 			break;
 		}
 	case EPuzzleState::GameOver:
 		{
 			// 게임오버 상태 (UI)
-			//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("Invoker History Size : %d"), CommandInvoker->CommandHistory.Num()));
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("Invoker History Size : %d"), CommandInvoker->CommandHistory.Num()));
 			
 			break;
 		}
@@ -154,7 +159,7 @@ void APuzzleGrid::InitPuzzleGrid()
 
 void APuzzleGrid::AddSelectedTile(ATile* NewTile)
 {
-	if (CurrentPuzzleState != EPuzzleState::PlayerTurn) return;
+	if (CurrentPuzzleState != EPuzzleState::PlayerTurn || MoveCounter.GetValue() > 0) return;
 	
 	// int32 idx;
 	// PuzzleGrid.Find(NewTile, idx);
@@ -166,6 +171,7 @@ void APuzzleGrid::AddSelectedTile(ATile* NewTile)
 		{
 			NewTile->SetTileSelected(true);
 			SelectedTile[1] = NewTile;
+			Cast<UPuzzle_GameInstance>(GetGameInstance())->DecreaseMove();
 			SetPuzzleState(EPuzzleState::ResolveBoard);
 		}
 		else
@@ -239,7 +245,7 @@ void APuzzleGrid::DropTile()
 			}
 		}
 	}
-	for (auto Tile : MoveTiles)
+	for (TPair<ATile*, int> Tile : MoveTiles)
 	{
 		PuzzleGrid[Tile.Value] = Tile.Key;
 		FIntPoint Coord = GetCoordinate(Tile.Value);
@@ -284,7 +290,7 @@ bool APuzzleGrid::MatchingCheck()
 	bool bIsMatch = false;
 	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Emerald, FString::Printf(TEXT("Matching Check")));
 	// 가로 탐색
-	MatchingTileIdx.Reset();
+	MatchingTileIdx.Empty();
 	for (int i = 0; i < GridHeight; i++)
 	{
 		for (int j = i * GridWidth; j < i * GridWidth + GridWidth; j++)
@@ -303,7 +309,7 @@ bool APuzzleGrid::MatchingCheck()
 					}
 					else
 					{
-						MatchingTileIdx.Reset();
+						MatchingTileIdx.Empty();
 						MatchingTileIdx.Add(j);
 					}
 				}
@@ -318,10 +324,10 @@ bool APuzzleGrid::MatchingCheck()
 			}
 			else
 			{
-				MatchingTileIdx.Reset();
+				MatchingTileIdx.Empty();
 			}
 		}
-		MatchingTileIdx.Reset();
+		MatchingTileIdx.Empty();
 	}
 	// 세로 탐색
 	for (int i = 0; i < GridWidth; i++)
@@ -342,7 +348,7 @@ bool APuzzleGrid::MatchingCheck()
 					}
 					else
 					{
-						MatchingTileIdx.Reset();
+						MatchingTileIdx.Empty();
 						MatchingTileIdx.Add(j);
 					}
 				}
@@ -357,25 +363,87 @@ bool APuzzleGrid::MatchingCheck()
 			}
 			else
 			{
-				MatchingTileIdx.Reset();
+				MatchingTileIdx.Empty();
 			}
 		}
-		MatchingTileIdx.Reset();
+		MatchingTileIdx.Empty();
 	}
 	return bIsMatch;
 }
 
 void APuzzleGrid::PopTile()
 {
+	ComboScore *= 2;
 	for (int i = 0; i < PuzzleGrid.Num(); i++)
 	{
 		if (PuzzleGrid[i] && PuzzleGrid[i]->bIsMatched)
 		{
 			//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("MatchingTile : %s"), *PuzzleGrid[i]->GetName()));
+			Cast<UPuzzle_GameInstance>(GetGameInstance())->AddScore(ComboScore * 10);
 			PuzzleGrid[i]->Destroy();
 			PuzzleGrid[i] = nullptr;
 		}
 	}
+}
+
+bool APuzzleGrid::bCanPlayPuzzle()
+{
+	if (Cast<UPuzzle_GameInstance>(GetGameInstance())->GetRemainingMove() <= 0) return false;
+
+	for (int32 y = 0; y < GridHeight; y++)
+	{
+		for (int32 x = 0; x < GridWidth; x++)
+		{
+			int32 CurrentIndex = GetIndex(x, y);
+
+			// 현재 위치의 타일이 유효한지 확인합니다.
+			if (PuzzleGrid[CurrentIndex] != nullptr)
+			{
+				// 오른쪽 타일과 교체하여 검사
+				if (x + 1 < GridWidth)
+				{
+					int32 RightIndex = GetIndex(x + 1, y);
+					if (PuzzleGrid[RightIndex] != nullptr)
+					{
+						PuzzleGrid.Swap(CurrentIndex, RightIndex);
+						if (MatchingCheck())
+						{
+							PuzzleGrid.Swap(CurrentIndex, RightIndex);  // 원래 위치로 복구
+							MatchingTileIdx.Empty();
+							for (ATile* Tile : PuzzleGrid)
+							{
+								Tile->bIsMatched = false;
+							}
+							return true;  // 매칭 가능한 경우가 존재합니다.
+						}
+						PuzzleGrid.Swap(CurrentIndex, RightIndex);  // 원래 위치로 복구
+					}
+				}
+
+				// 아래쪽 타일과 교체하여 검사
+				if (y + 1 < GridHeight)
+				{
+					int32 DownIndex = GetIndex(x, y + 1);
+					if (PuzzleGrid[DownIndex] != nullptr)
+					{
+						PuzzleGrid.Swap(CurrentIndex, DownIndex);
+						if (MatchingCheck())
+						{
+							PuzzleGrid.Swap(CurrentIndex, DownIndex);  // 원래 위치로 복구
+							MatchingTileIdx.Empty();
+							for (ATile* Tile : PuzzleGrid)
+							{
+								Tile->bIsMatched = false;
+							}
+							return true;  // 매칭 가능한 경우가 존재합니다.
+						}
+						PuzzleGrid.Swap(CurrentIndex, DownIndex);  // 원래 위치로 복구
+					}
+				}
+			}
+		}
+	}
+	return false;
 }
 
 void APuzzleGrid::StartMoveAnim()

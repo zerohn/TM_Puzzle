@@ -8,7 +8,6 @@
 
 UGameStateSubject::UGameStateSubject()
 {
-	PlayerScore = 0;
 }
 
 void UGameStateSubject::RegisterObserver(TScriptInterface<IObserver> Observer)
@@ -21,7 +20,7 @@ void UGameStateSubject::UnregisterObserver(TScriptInterface<IObserver> Observer)
 	Observers.Remove(Observer);
 }
 
-void UGameStateSubject::NotifyObservers()
+void UGameStateSubject::NotifyObservers(UObject* WorldContextObject)
 {
 	for (TScriptInterface<IObserver> Observer : Observers)
 	{
@@ -30,10 +29,4 @@ void UGameStateSubject::NotifyObservers()
 			IObserver::Execute_OnNotify(Observer.GetObject(), PlayerScore);
 		}
 	}
-}
-
-void UGameStateSubject::IncreaseScore(int32 Amount)
-{
-	PlayerScore += Amount;
-	NotifyObservers();
 }

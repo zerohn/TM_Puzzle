@@ -3,15 +3,23 @@
 
 #include "Puzzle_GameInstance.h"
 
+#include "GameStateSubject.h"
+
 UPuzzle_GameInstance::UPuzzle_GameInstance()
 {
-	Score = 0;
+	PlayerScore = 0;
 	RemainingMove = 30;
+	GameStateSubjectInstance = nullptr;
 }
 
 void UPuzzle_GameInstance::AddScore(int32 Points)
 {
-	Score += Points;
+	PlayerScore += Points;
+
+	if (GameStateSubjectInstance)
+	{
+		GameStateSubjectInstance->NotifyObservers();
+	}
 }
 
 void UPuzzle_GameInstance::DecreaseMove()
@@ -24,6 +32,11 @@ void UPuzzle_GameInstance::DecreaseMove()
 
 void UPuzzle_GameInstance::ResetGameState()
 {
-	Score = 0;
+	PlayerScore = 0;
 	RemainingMove = 30;
+}
+
+void UPuzzle_GameInstance::SetGameStateSubject(UGameStateSubject* NewSubject)
+{
+	GameStateSubjectInstance = NewSubject;
 }

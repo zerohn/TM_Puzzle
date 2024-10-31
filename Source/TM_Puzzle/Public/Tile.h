@@ -14,6 +14,7 @@ enum class ETileType : uint8
 	Moon UMETA(DisplayName = "Moon"),
 	Earth UMETA(DisplayName = "Earth"),
 	Jupiter UMETA(DisplayName = "Jupiter"),
+	Mars UMETA(DisplayName = "Mars"),
 	MaxTileType
 };
 
@@ -47,7 +48,7 @@ public:
 	
 protected:
 	// 타일의 Type 변수
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Tile")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tile")
 	ETileType TileType;
 	
 public:

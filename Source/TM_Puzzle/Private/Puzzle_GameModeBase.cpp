@@ -5,6 +5,7 @@
 
 #include "GameStateSubject.h"
 #include "GameWidgetObserver.h"
+#include "Puzzle_GameInstance.h"
 #include "Kismet/GameplayStatics.h"
 
 APuzzle_GameModeBase::APuzzle_GameModeBase()
@@ -18,11 +19,26 @@ void APuzzle_GameModeBase::BeginPlay()
 
 	UGameplayStatics::GetPlayerController(GetWorld(), 0)->bShowMouseCursor = true;
 
-	UGameStateSubject* ObserverGameState = NewObject<UGameStateSubject>();
-	UGameWidgetObserver* ScoreWidget = CreateWidget<UGameWidgetObserver>(GetWorld(), LoadClass<UGameWidgetObserver>(nullptr, TEXT("/Game/UI/WBP_ScoreWidget.WBP_ScoreWidget_C")));
-	if (ObserverGameState && ScoreWidget)
+	UPuzzle_GameInstance* PuzzleInstance = Cast<UPuzzle_GameInstance>(GetGameInstance());
+	if(PuzzleInstance)
 	{
-		ScoreWidget->AddToViewport();
-		ObserverGameState->RegisterObserver(ScoreWidget);
+		PuzzleInstance->ResetGameState();
+	}
+	
+	UGameStateSubject* ObserverGameState = NewObject<UGameStateSubject>();
+
+	if (PuzzleInstance)
+	{
+		PuzzleInstance->SetGameStateSubject(ObserverGameState);
+	}
+
+	if (MainWidgetClass)
+	{
+		UGameWidgetObserver* ScoreWidget = CreateWidget<UGameWidgetObserver>(GetWorld(), MainWidgetClass);
+		if (ScoreWidget)
+		{
+			ScoreWidget->AddToViewport();
+			ObserverGameState->RegisterObserver(ScoreWidget);
+		}
 	}
 }

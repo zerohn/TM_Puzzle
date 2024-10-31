@@ -16,16 +16,13 @@ class TM_PUZZLE_API UGameWidgetObserver : public UUserWidget, public IObserver
 	GENERATED_BODY()
 	
 private:
-	
-	int32 CurrentScore;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* ScoreText;
 
 public:
 
 	virtual void OnNotify_Implementation(int32 UpdateScore) override;
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "UI")
-	void UpdateScoreUI(int32 NewScore);
-
 	UFUNCTION(BlueprintCallable, Category = "UI")
-	int32 GetCurrentScore() { return CurrentScore; }
+	void UpdateScoreUI(int32 NewScore);
 };

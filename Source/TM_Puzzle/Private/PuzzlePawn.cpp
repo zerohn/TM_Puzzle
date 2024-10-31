@@ -65,7 +65,7 @@ void APuzzlePawn::OnClick(const FInputActionValue& value)
 				APuzzleGrid* PuzzleGrid = Cast<APuzzleGrid>(UGameplayStatics::GetActorOfClass(GetWorld(), APuzzleGrid::StaticClass()));
 				if(PuzzleGrid)
 				{
-					GEngine->AddOnScreenDebugMessage(-1, .5f, FColor::Yellow, FString::Printf(TEXT("Idx : %d\nLoc : %s"), PuzzleGrid->PuzzleGrid.Find(Tile), *Tile->GetActorLocation().ToString()));
+					//GEngine->AddOnScreenDebugMessage(-1, .5f, FColor::Yellow, FString::Printf(TEXT("Idx : %d\nLoc : %s"), PuzzleGrid->PuzzleGrid.Find(Tile), *Tile->GetActorLocation().ToString()));
 					PuzzleGrid->AddSelectedTile(Tile);
 				}
 			}

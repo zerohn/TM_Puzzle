@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "Puzzle_GameModeBase.generated.h"
 
+class UGameWidgetObserver;
 /**
  * 
  */
@@ -17,4 +18,7 @@ public:
 	APuzzle_GameModeBase();
 protected:
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay")
+	TSubclassOf<UGameWidgetObserver> MainWidgetClass;
 };

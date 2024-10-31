@@ -25,4 +25,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Observer")
 	void OnNotify(int32 UpdateScore);
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Observer")
+	void OnNotifyRemainingMoves(int32 RemainingMoves);
 };

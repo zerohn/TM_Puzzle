@@ -18,8 +18,6 @@ private:
 	
 	TArray<TScriptInterface<IObserver>> Observers;
 	
-	int32 PlayerScore;
-	
 public:
 	
 	UGameStateSubject();
@@ -28,9 +26,6 @@ public:
 
 	void UnregisterObserver(TScriptInterface<IObserver> Observer);
 
-	void NotifyObservers();
-
-	void IncreaseScore(int32 Amount);
-
-	int32 GetScore() const { return PlayerScore; }
+	void NotifyObservers(UObject* WorldContextObject);
+	
 };
