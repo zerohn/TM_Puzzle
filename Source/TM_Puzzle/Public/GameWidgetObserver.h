@@ -18,11 +18,12 @@ class TM_PUZZLE_API UGameWidgetObserver : public UUserWidget, public IObserver
 private:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* ScoreText;
-
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* RemainingMoveText;
 public:
 
 	virtual void OnNotify_Implementation(int32 UpdateScore) override;
 
-	UFUNCTION(BlueprintCallable, Category = "UI")
-	void UpdateScoreUI(int32 NewScore);
+	virtual void OnNotifyRemainingMoves_Implementation(int32 RemainingMoves) override;
+
 };

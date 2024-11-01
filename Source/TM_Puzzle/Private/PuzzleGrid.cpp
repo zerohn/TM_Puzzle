@@ -4,11 +4,9 @@
 #include "PuzzleGrid.h"
 
 #include "Puzzle_GameInstance.h"
-#include "Puzzle_GameModeBase.h"
 #include "SwapCommand.h"
 #include "Tile.h"
 #include "TileCommandInvoker.h"
-#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
@@ -60,6 +58,7 @@ void APuzzleGrid::HandlePuzzleState()
 		{
 			// 퍼즐 게임 시작 전 준비 과정
 			InitPuzzleGrid();
+			if (UPuzzle_GameInstance* GameInstance = Cast<UPuzzle_GameInstance>(GetGameInstance())) GameInstance->ResetGameState();
 			SetPuzzleState(EPuzzleState::PlayerTurn);
 			break;
 		}
@@ -89,6 +88,10 @@ void APuzzleGrid::HandlePuzzleState()
 			{
 				// 타일 2개가 선택되어 있을 시 SwapCommand 실행
 				TSharedPtr<SwapCommand> NewCommand = MakeShared<SwapCommand>(this, SelectedTile[0], SelectedTile[1]);
+				if (bCanSwapTile(SelectedTile[0], SelectedTile[1]))
+				{
+					Cast<UPuzzle_GameInstance>(GetGameInstance())->DecreaseMove();
+				}
 				CommandInvoker->ExecuteCommand(NewCommand);
 				SelectedTile[0] = nullptr;
 				SelectedTile[1] = nullptr;
@@ -171,7 +174,6 @@ void APuzzleGrid::AddSelectedTile(ATile* NewTile)
 		{
 			NewTile->SetTileSelected(true);
 			SelectedTile[1] = NewTile;
-			Cast<UPuzzle_GameInstance>(GetGameInstance())->DecreaseMove();
 			SetPuzzleState(EPuzzleState::ResolveBoard);
 		}
 		else
@@ -210,10 +212,6 @@ void APuzzleGrid::SwapTile(ATile* Tile_A, ATile* Tile_B)
 		FVector Loc_B = Tile_B->GetActorLocation();
 		Tile_A->MoveToLocation(Loc_B, 0.5f);
 		Tile_B->MoveToLocation(Loc_A, 0.5f);
-		// GetWorldTimerManager().SetTimer(TileAnimHandle, [this, Tile_A, Tile_B, Loc_A, Loc_B]()
-		// {
-		// 	ChangeAnimation(Tile_A, Tile_B, Loc_A, Loc_B);
-		// }, 0.01f, true);
 		PuzzleGrid.Swap(PuzzleGrid.Find(Tile_A), PuzzleGrid.Find(Tile_B));
 	}
 	else
@@ -373,13 +371,13 @@ bool APuzzleGrid::MatchingCheck()
 
 void APuzzleGrid::PopTile()
 {
-	ComboScore *= 2;
+	ComboScore += 2;
 	for (int i = 0; i < PuzzleGrid.Num(); i++)
 	{
 		if (PuzzleGrid[i] && PuzzleGrid[i]->bIsMatched)
 		{
 			//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("MatchingTile : %s"), *PuzzleGrid[i]->GetName()));
-			Cast<UPuzzle_GameInstance>(GetGameInstance())->AddScore(ComboScore * 10);
+			if (UPuzzle_GameInstance* GameInstance = Cast<UPuzzle_GameInstance>(GetGameInstance())) GameInstance->AddScore(ComboScore * 10);
 			PuzzleGrid[i]->Destroy();
 			PuzzleGrid[i] = nullptr;
 		}
@@ -449,13 +447,13 @@ bool APuzzleGrid::bCanPlayPuzzle()
 void APuzzleGrid::StartMoveAnim()
 {
 	MoveCounter.Increment();
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Cyan, FString::Printf(TEXT("MoveCount : %d"), MoveCounter.GetValue()));
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Cyan, FString::Printf(TEXT("MoveCount : %d"), MoveCounter.GetValue()));
 }
 
 void APuzzleGrid::EndMoveAnim()
 {
 	MoveCounter.Decrement();
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Cyan, FString::Printf(TEXT("MoveCount : %d"), MoveCounter.GetValue()));
+	//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Cyan, FString::Printf(TEXT("MoveCount : %d"), MoveCounter.GetValue()));
 
 	if (MoveCounter.GetValue() == 0)
 	{

@@ -3,24 +3,15 @@
 
 #include "GameWidgetObserver.h"
 
-#include "Puzzle_GameInstance.h"
 #include "Components/TextBlock.h"
 
 void UGameWidgetObserver::OnNotify_Implementation(int32 UpdateScore)
 {
-	if(UPuzzle_GameInstance* PuzzleInstance = Cast<UPuzzle_GameInstance>(GetGameInstance()))
-	{
-		int32 CurrentScore = PuzzleInstance->GetCurrentScore();
-		
-		UpdateScoreUI(CurrentScore);
-	}
+	if (ScoreText) ScoreText->SetText(FText::AsNumber(UpdateScore));
 
 }
 
-void UGameWidgetObserver::UpdateScoreUI(int32 NewScore)
+void UGameWidgetObserver::OnNotifyRemainingMoves_Implementation(int32 RemainingMoves)
 {
-	if (ScoreText)
-	{
-		ScoreText->SetText(FText::AsNumber(NewScore));
-	}
+	if (RemainingMoveText) RemainingMoveText->SetText(FText::AsNumber(RemainingMoves));
 }

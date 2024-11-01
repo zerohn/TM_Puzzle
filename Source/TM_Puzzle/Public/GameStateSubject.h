@@ -13,19 +13,21 @@ UCLASS()
 class TM_PUZZLE_API UGameStateSubject : public UObject
 {
 	GENERATED_BODY()
+public:
+
+	UGameStateSubject();
 	
 private:
 	
 	TArray<TScriptInterface<IObserver>> Observers;
 	
 public:
-	
-	UGameStateSubject();
 
 	void RegisterObserver(TScriptInterface<IObserver> Observer);
 
 	void UnregisterObserver(TScriptInterface<IObserver> Observer);
 
 	void NotifyObservers(UObject* WorldContextObject);
-	
+
+	void NotifyObserversMoves(UObject* WorldContextObject);
 };
