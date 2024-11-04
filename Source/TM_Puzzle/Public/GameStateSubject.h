@@ -20,6 +20,8 @@ public:
 private:
 	
 	TArray<TScriptInterface<IObserver>> Observers;
+
+	FCriticalSection CriticalSection;
 	
 public:
 

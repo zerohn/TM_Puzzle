@@ -18,10 +18,11 @@ void UPuzzle_GameInstance::AddScore(int32 Points)
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("PlayerScore : %d"), PlayerScore));
 	if (GameStateSubjectInstance)
 	{
-		AsyncTask(ENamedThreads::GameThread, [this]()
-		{
-			GameStateSubjectInstance->NotifyObservers(this);
-		});
+		GameStateSubjectInstance->NotifyObservers(GetWorld());
+		// AsyncTask(ENamedThreads::GameThread, [this]()
+		// {
+		// 	GameStateSubjectInstance->NotifyObservers(this);
+		// });
 	}
 }
 
@@ -33,10 +34,11 @@ void UPuzzle_GameInstance::DecreaseMove()
 		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("Remaining Moves : %d"), RemainingMove));
 		if (GameStateSubjectInstance)
 		{
-			AsyncTask(ENamedThreads::GameThread, [this]()
-			{
-				GameStateSubjectInstance->NotifyObserversMoves(this);
-			});
+			GameStateSubjectInstance->NotifyObserversMoves(GetWorld());
+			// AsyncTask(ENamedThreads::GameThread, [this]()
+			// {
+			// 	GameStateSubjectInstance->NotifyObserversMoves(this);
+			// });
 		}
 	}
 }
@@ -47,15 +49,32 @@ void UPuzzle_GameInstance::ResetGameState()
 	RemainingMove = 20;
 	if (GameStateSubjectInstance)
 	{
-		AsyncTask(ENamedThreads::GameThread, [this]()
-		{
-			GameStateSubjectInstance->NotifyObservers(this);
-			GameStateSubjectInstance->NotifyObserversMoves(this);
-		});
+		GameStateSubjectInstance->NotifyObservers(GetWorld());
+		GameStateSubjectInstance->NotifyObserversMoves(GetWorld());
+		// AsyncTask(ENamedThreads::GameThread, [this]()
+		// {
+		// 	GameStateSubjectInstance->NotifyObservers(this);
+		// 	GameStateSubjectInstance->NotifyObserversMoves(this);
+		// });
 	}
 }
 
 void UPuzzle_GameInstance::SetGameStateSubject(UGameStateSubject* NewSubject)
 {
-	GameStateSubjectInstance = NewSubject;
+	if (NewSubject)
+	{
+		if (GameStateSubjectInstance) GameStateSubjectInstance->RemoveFromRoot();
+		
+		GameStateSubjectInstance = NewSubject;
+		GameStateSubjectInstance->AddToRoot();
+	}
+}
+
+void UPuzzle_GameInstance::RemoveGameStateSubject()
+{
+	if (GameStateSubjectInstance)
+	{
+		GameStateSubjectInstance->RemoveFromRoot();
+		GameStateSubjectInstance = nullptr;
+	}
 }

@@ -81,8 +81,7 @@ void APuzzleGrid::HandlePuzzleState()
 			{
 				CommandInvoker->ClearHistory();
 				PopTile();
-				DropTile();
-				SpawnTileToGrid();
+				GetWorldTimerManager().SetTimer(PuzzleTimerHandle, this, &APuzzleGrid::DropTile, 0.2f);
 			}
 			else if (SelectedTile[0] != nullptr && SelectedTile[1] != nullptr)
 			{
@@ -101,14 +100,13 @@ void APuzzleGrid::HandlePuzzleState()
 				CommandInvoker->UndoCommand();
 				SetPuzzleState(EPuzzleState::PlayerTurn);
 			}
-
 			break;
 		}
 	case EPuzzleState::GameOver:
 		{
 			// 게임오버 상태 (UI)
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("Invoker History Size : %d"), CommandInvoker->CommandHistory.Num()));
-			
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald, FString::Printf(TEXT("GameOver")));
+			Cast<UPuzzle_GameInstance>(GetGameInstance())->RemoveGameStateSubject();
 			break;
 		}
 	}
@@ -249,6 +247,7 @@ void APuzzleGrid::DropTile()
 		FIntPoint Coord = GetCoordinate(Tile.Value);
 		Tile.Key->MoveToLocation(GetActorLocation() + FVector(Coord.X * TileSize, Coord.Y * TileSize, 0.0f), 0.5f);
 	}
+	SpawnTileToGrid();
 }
 
 // void APuzzleGrid::ChangeAnimation(ATile* Tile_A, ATile* Tile_B, const FVector Loc_A, const FVector Loc_B)

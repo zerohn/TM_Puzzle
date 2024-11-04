@@ -35,4 +35,5 @@ public:
 	int32 GetRemainingMove() const { return RemainingMove; }
 
 	void SetGameStateSubject(UGameStateSubject* NewSubject);
+	void RemoveGameStateSubject();
 };
