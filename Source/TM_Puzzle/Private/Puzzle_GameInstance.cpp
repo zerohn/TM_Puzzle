@@ -66,15 +66,15 @@ void UPuzzle_GameInstance::SetGameStateSubject(UGameStateSubject* NewSubject)
 		if (GameStateSubjectInstance) GameStateSubjectInstance->RemoveFromRoot();
 		
 		GameStateSubjectInstance = NewSubject;
-		GameStateSubjectInstance->AddToRoot();
+		//GameStateSubjectInstance->AddToRoot();
 	}
 }
 
 void UPuzzle_GameInstance::RemoveGameStateSubject()
 {
-	if (GameStateSubjectInstance)
-	{
-		GameStateSubjectInstance->RemoveFromRoot();
-		GameStateSubjectInstance = nullptr;
-	}
+	// if (GameStateSubjectInstance)
+	// {
+	// 	GameStateSubjectInstance->RemoveFromRoot();
+	// 	GameStateSubjectInstance = nullptr;
+	// }
 }

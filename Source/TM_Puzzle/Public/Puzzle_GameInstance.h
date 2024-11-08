@@ -21,6 +21,7 @@ public:
 private:
 	int32 PlayerScore;
 	int32 RemainingMove;
+	UPROPERTY()
 	UGameStateSubject* GameStateSubjectInstance;
 	
 public:
